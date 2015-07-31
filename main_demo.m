@@ -30,9 +30,9 @@ Mds=1;  %don't downsample when averaging over snapshots; let hop take care of th
 % STFT filterbank parameters:
 Nfft = Nwin; %length of FFT
 h = hamming(Nwin,'periodic');   %analysis window
-[h,winCheck]=ola(h,hop);
+[h,winCheck]=ola(h,hop);    %ensure window is perfect overlap-add
 
-%QUT-NOISE parameters
+% QUT-NOISE parameters
 % scen='CAFE-CAFE-1';
 scen='CAR-WINDOWNB-1';  %one of the 20 noise types in QUT-NOISE
 % scen='STREET-CITY-1';
@@ -65,6 +65,7 @@ switch(mixing_type)
         x = s + [v(:,1),[v(2:end,1);0]];
 end
 
+% flags that control saving and loading of circularity coefficients k:
 flag_load_k=1;  %if saved k's exist, load them
 flag_save_k=0;  %save off the computed k's, uses about 120MB of space
 
@@ -82,11 +83,11 @@ else
 %     xpe=preemph(x,0.98);
     xpe=x;
     disp('Computing ground truth k of speech...');
-    tic; [ks(:,:,1),S(:,:,1)] = circsb_ds(s(:,1),fs,Nfft,Nwin,h,hop,M,Mhop,Mds,0,0,0,1,0,0); toc;
+    tic; [ks(:,:,1),S(:,:,1)] = circsb_ds(s(:,1),fs,Nfft,Nwin,h,hop,M,Mhop,Mds,0,0,1); toc;
     disp('Computing ground truth k of noise...');
-    tic; [kv(:,:,1),V(:,:,1)] = circsb_ds(v(:,1),fs,Nfft,Nwin,h,hop,M,Mhop,Mds,0,0,0,1,0,0); toc;
+    tic; [kv(:,:,1),V(:,:,1)] = circsb_ds(v(:,1),fs,Nfft,Nwin,h,hop,M,Mhop,Mds,0,0,1); toc;
     disp('Computing k of mix...');
-    tic; [kx(:,:,1),X(:,:,1)] = circsb_ds(x(:,1),fs,Nfft,Nwin,h,hop,M,Mhop,Mds,0,0,0,1,0,0); toc;
+    tic; [kx(:,:,1),X(:,:,1)] = circsb_ds(x(:,1),fs,Nfft,Nwin,h,hop,M,Mhop,Mds,0,0,1); toc;
     if flag_save_k
         save(kname,'ks','kv','kx');
     end

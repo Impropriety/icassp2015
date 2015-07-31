@@ -1,10 +1,7 @@
-function [k,X]=circsb_ds(x,fs,Nfft,Nwin,h,hop,M,Mhop,Mds,flag_recon,flag_verbose,flag_save_kest,flag_keep_transients,flag_fix_scaling,flag_apply_permutation,flag_exact_length,flag_demean)
+function [k,X,H,C]=circsb_ds(x,fs,Nfft,Nwin,h,hop,M,Mhop,Mds,flag_recon,flag_verbose,flag_keep_transients,flag_exact_length,flag_demean)
 % function [k,X]=circsb_ds(x,fs,Nfft,Nwin,h,hop,M,Mhop,Mds,flag_recon,...
 %                                                          flag_verbose,...
-%                                                          flag_save_kest,...
 %                                                          flag_keep_transients,...
-%                                                          flag_fix_scaling,...
-%                                                          flag_apply_permutation,...
 %                                                          flag_exact_length,...
 %                                                          flag_demean)
 % 
@@ -51,17 +48,8 @@ function [k,X]=circsb_ds(x,fs,Nfft,Nwin,h,hop,M,Mhop,Mds,flag_recon,flag_verbose
     if ~exist('flag_verbose','var')
         flag_verbose = 0;
     end
-    if ~exist('flag_save_kest','var')
-        flag_save_kest = 1;
-    end
     if ~exist('flag_keep_transients','var')
         flag_keep_transients = 0;
-    end
-    if ~exist('flag_fix_scaling','var')
-        flag_fix_scaling = 1;
-    end
-    if ~exist('flag_apply_permutation','var')
-        flag_apply_permutation = 1;
     end
     if ~exist('flag_exact_length','var')
 %         if flag_keep_transients
@@ -109,7 +97,9 @@ function [k,X]=circsb_ds(x,fs,Nfft,Nwin,h,hop,M,Mhop,Mds,flag_recon,flag_verbose
     
     numSnapshots = 1 + (Nframes-M)/Mhop;
 
-    k = zeros(Nfft1,numSnapshots);    %initialize circularity spectrum matrix
+    k = zeros(Nfft1,numSnapshots);      %initialize circularity spectrum matrix
+    H = zeros(size(k));                 %initialize Hermitian variance matrix
+    C = zeros(size(k));                 %initialize complementary variance matrix
 %     Aall = zeros(Nfft1,numSnapshots,2,2);
 %     kidx = zeros(1,numSnapshots);
 %     kest = zeros(Nfft1,numSnapshots,2);    %initialize estimated circularity coeff matrix
@@ -120,7 +110,7 @@ function [k,X]=circsb_ds(x,fs,Nfft,Nwin,h,hop,M,Mhop,Mds,flag_recon,flag_verbose
     for mm=1:numSnapshots
         
         if flag_verbose
-            if (mm-1) && mod(mm,10)==0
+            if (mm-1) && mod(mm,floor(numSnapshots/10))==0
                 toc;
                 disp(['Processed ' num2str(mm) ' of ' num2str(numSnapshots) ' snapshots.']);
                 tic;
@@ -133,7 +123,11 @@ function [k,X]=circsb_ds(x,fs,Nfft,Nwin,h,hop,M,Mhop,Mds,flag_recon,flag_verbose
         if flag_demean
             Xsnap = bsxfun(@minus,Xsnap,mean(Xsnap,2));
         end
-        k(:,mm) = sum(Xsnap.^2,2)./(eps+sum(abs(Xsnap).^2,2));
+        C(:,mm) = sum(Xsnap.^2,2);
+        H(:,mm) = eps+sum(abs(Xsnap).^2,2);
+        k(:,mm) = C(:,mm)./H(:,mm);
+        
+        
         
     end
     

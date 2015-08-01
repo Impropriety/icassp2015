@@ -8,7 +8,7 @@ opts.fs=fs;
 opts.flag_verbose=1;
 
 % range of thresholds to try:
-threshold=linspace(0.4,0.8,11);
+threshold=linspace(0.4,0.8,31);
 
 % run the VAD
 [stat,labels]=vad_circ(x,opts,threshold);
@@ -20,6 +20,8 @@ llrep=repmat(ll,[length(threshold),1]);
 mr =sum( double(llrep==1 & labels==0), 2)./sum( double(ll==1) );
 % false alarm rate:
 far=sum( double(llrep==0 & labels==1), 2)./sum( double(ll==0) );
+% true detection rate:
+dr=sum( double(llrep==1 & labels==1), 2)./sum( double(ll==1) );
 
 % plot the miss and false alarm rates
 figure;
@@ -28,3 +30,10 @@ hold on;
 plot(threshold,far,'r');
 legend('MR','FAR');
 xlabel('Threshold');
+
+% plot ROC curve
+figure;
+plot(far,dr);
+xlabel('False positive rate');
+ylabel('True positive rate');
+title('ROC curve');
